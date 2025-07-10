@@ -3,7 +3,6 @@ import pandas as pd
 from typing import Tuple, Optional
 
 # Импортируем утилиты из отдельных файлов
-from dashboard.utils.date_utils import find_date_column, process_date_column, get_date_formats
 from dashboard.utils.validation_utils import validate_numeric_columns
 from dashboard.utils.validate_data import validate_dataframe_structure
 from dashboard.utils.statistics_utils import calculate_outlier_percentage, delete_missing_values, sort_dataframe_by_index
@@ -32,6 +31,9 @@ def process_dataframe(df: pd.DataFrame) -> Tuple[pd.DataFrame, float]:
     
     # Удаляем строки, если в них найдено хотбы одно пустое значение
     df = delete_missing_values(df)
+
+    # Сортируем данные по индексу
+    df = sort_dataframe_by_index(df, True)
     
     # Вычисляем процент выбросов
     outlier_percentage = calculate_outlier_percentage(df)
