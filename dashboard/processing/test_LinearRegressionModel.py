@@ -1,8 +1,8 @@
-from LinearRegressionModel import LinearRegressionModel
+from linearRegressionModel import LinearRegressionModel
 import pandas as pd
 X_multi = pd.DataFrame([[1, 2], [2, 4], [3, 1], [4, 3], [5, 5]],columns=["sensor","block"])
 y_multi = pd.DataFrame([5, 8, 7, 11, 15],columns=["target"])
-
+ 
 model = LinearRegressionModel()
 model.fit(X_multi, y_multi)
 
