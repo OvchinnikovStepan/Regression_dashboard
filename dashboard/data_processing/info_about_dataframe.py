@@ -29,33 +29,7 @@ def get_tuples_count(df: pd.DataFrame) -> Optional[int]:
     return len(df) if df is not None else None
 
 
-def get_first_timestamp(df: pd.DataFrame) -> Optional[pd.Timestamp]:
-    """
-    Возвращает первую временную метку в DataFrame
-    
-    Args:
-        df: DataFrame для анализа
-        
-    Returns:
-        Optional[pd.Timestamp]: Первая временная метка или None
-    """
-    return df.index.min() if df is not None and not df.empty else None
-
-
-def get_last_timestamp(df: pd.DataFrame) -> Optional[pd.Timestamp]:
-    """
-    Возвращает последнюю временную метку в DataFrame
-    
-    Args:
-        df: DataFrame для анализа
-        
-    Returns:
-        Optional[pd.Timestamp]: Последняя временная метка или None
-    """
-    return df.index.max() if df is not None and not df.empty else None
-
-
-def get_dataframe_info(df: pd.DataFrame) -> Tuple[Optional[int], Optional[int], Optional[pd.Timestamp], Optional[pd.Timestamp]]:
+def get_dataframe_info(df: pd.DataFrame) -> Tuple[Optional[int], Optional[int]]:
     """
     Возвращает основную информацию о DataFrame
     
@@ -67,14 +41,12 @@ def get_dataframe_info(df: pd.DataFrame) -> Tuple[Optional[int], Optional[int], 
     """
     features_size = get_features_count(df)
     tuples_size = get_tuples_count(df)
-    first_tuple = get_first_timestamp(df)
-    last_tuple = get_last_timestamp(df)
     
-    return features_size, tuples_size, first_tuple, last_tuple
+    return features_size, tuples_size
 
 
 # Для обратной совместимости
-def info_about_dataframe(df: pd.DataFrame) -> Tuple[Optional[int], Optional[int], Optional[pd.Timestamp], Optional[pd.Timestamp]]:
+def info_about_dataframe(df: pd.DataFrame) -> Tuple[Optional[int], Optional[int]]:
     """
     Алиас для get_dataframe_info для обратной совместимости
     """

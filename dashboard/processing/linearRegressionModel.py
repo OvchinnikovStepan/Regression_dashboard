@@ -61,7 +61,7 @@ class LinearRegressionModel:
         return self.model.predict(X_array)
     
     def evaluate(self, X_test=None, y_test=None):
-        """
+        """ 
         Расчет метрик качества модели
         
         Параметры:

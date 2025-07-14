@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from dashboard.data_processing.info_about_dataframe import info_about_dataframe
 from dashboard.visualization.plot_interactive_with_selection import plot_interactive_with_selection
+from dashboard.data_processing.render_main_panel import render_main_panel
 from dashboard.visualization.show_heatmap import show_heatmap
 from dashboard.data_processing.info_about_feature import info_about_feature
 from dashboard.visualization.show_pairplot import show_pairplot
@@ -15,18 +16,21 @@ def render_data_overview(df: pd.DataFrame, outlier_percentage: float) -> None:
     """
     Отображает верхнюю панель с общей информацией о данных
     """
-    top_cols = st.columns([2, 2, 2, 2, 2])
-    features_size, tuples_size, first_tuple, last_tuple = info_about_dataframe(df)
+    features_size, tuples_size, = info_about_dataframe(df)
+    top_cols = st.columns([4, 8])
     with top_cols[0]:
-        st.markdown(f"Кол-во записей: {tuples_size if tuples_size is not None else 'Нет информации'}")
+        st.markdown("#### Информация о файле:")
+        st.markdown("")
+        st.markdown(f"##### Кол-во записей: {tuples_size if tuples_size is not None else 'Нет информации'}")
+        st.markdown(f"##### Количество признаков: {features_size if features_size is not None else 'Нет информации'}")
+        st.markdown(f"##### Количество выбросов: {f'{outlier_percentage}% от всех значений' if outlier_percentage is not None else 'Нет информации'}")
     with top_cols[1]:
-        st.markdown(f"Количество признаков: {features_size if features_size is not None else 'Нет информации'}")
-    with top_cols[2]:
-        st.markdown(f"Первая запись: {first_tuple if first_tuple is not None else 'Нет информации'}")
-    with top_cols[3]:
-        st.markdown(f"Последняя запись: {last_tuple if last_tuple is not None else 'Нет информации'}")
-    with top_cols[4]:
-        st.markdown(f"Количество выбросов: {f'{outlier_percentage}% от всех значений' if outlier_percentage is not None else 'Нет информации'}")
+        st.markdown("#### Предпросмотр:")
+        filtered_df = st.session_state.get('filtered_df', df)
+        if filtered_df is not None:
+            st.dataframe(filtered_df)
+        else:
+            st.markdown("Нет информации", unsafe_allow_html=True)
 
 def handle_filter_buttons(df: pd.DataFrame) -> None:
     """
@@ -94,11 +98,13 @@ def render_heatmap_pairplot_panel(df: pd.DataFrame) -> None:
     """
     Отображает панель heatmap и pairplot
     """
-    st.markdown("### Heatmap и pairplot")
+   
     col_heat, col_pair = st.columns(2)
     with col_heat:
+        st.markdown("### Heatmap")
         show_heatmap(df)
     with col_pair:
+        st.markdown("### Pairplot")
         show_pairplot(df)
 
 def render_sensor_statistics_panel(df: pd.DataFrame, filtered_df: pd.DataFrame) -> None:
@@ -136,25 +142,6 @@ def render_sensor_statistics_panel(df: pd.DataFrame, filtered_df: pd.DataFrame) 
         with col_autocorr:
             show_autocorrelation(df, selected_feature)
 
-def render_analysis_panels(df: pd.DataFrame, filtered_df: pd.DataFrame) -> None:
-    """
-    Отображает переключатель панелей анализа и выбранную панель
-    """
-    panel_col1, panel_col2 = st.columns(2)
-    with panel_col1:
-        if st.button("Heatmap и pairplot"):
-            st.session_state['active_panel'] = "heatmap_pairplot"
-    with panel_col2:
-        if st.button("Статистика датчиков"):
-            st.session_state['active_panel'] = "sensor_statistics"
-    if 'active_panel' not in st.session_state:
-        st.session_state['active_panel'] = "heatmap_pairplot"
-    if st.session_state['active_panel'] == "heatmap_pairplot":
-        render_heatmap_pairplot_panel(df)
-    elif st.session_state['active_panel'] == "sensor_statistics":
-        render_sensor_statistics_panel(df, filtered_df)
-
-
 
 def render_analysis_page(df: pd.DataFrame, outlier_percentage: float) -> None:
     """
@@ -164,42 +151,18 @@ def render_analysis_page(df: pd.DataFrame, outlier_percentage: float) -> None:
     render_data_overview(df, outlier_percentage)
     
     # Инициализация данных при загрузке нового файла
-    if df is not None and not df.empty:
+    if df is not None:
         current_df_hash = hash(pd.util.hash_pandas_object(df, index=True).sum())
-        if st.session_state.get('last_df_hash_analysis') != current_df_hash:
+        if st.session_state.get('last_df_hash') != current_df_hash:
+            st.session_state.clear()
             # При загрузке нового файла ограничиваем данные последними 500 точками
             limited_df = limit_data_to_last_points(df, 500)
             st.session_state['filtered_df'] = limited_df
             st.session_state['selected_sensors'] = df.columns.tolist()
             st.session_state['sensor_editor_temp'] = df.columns.tolist()
-            st.session_state['last_df_hash_analysis'] = current_df_hash
-            st.session_state['original_df_analysis'] = df  # Сохраняем оригинальный DataFrame
-            st.session_state['is_limited_view_analysis'] = True  # Флаг, что отображается ограниченный вид
-        
-        filtered_df = st.session_state['filtered_df']
-        
-        # Информация о текущем режиме отображения
-        original_df = st.session_state.get('original_df_analysis', df)
-        if original_df is not None and len(original_df) > 500:
-            if st.session_state.get('is_limited_view_analysis', False):
-                st.info(f"Отображаются последние 500 из {len(original_df)} записей. Используйте фильтр для просмотра других периодов.")
-                if st.button("Отобразить все записи", key="show_all_data_analysis"):
-                    st.session_state['filtered_df'] = original_df
-                    st.session_state['is_limited_view_analysis'] = False
-                    st.rerun()
-            else:
-                st.info(f"Отображаются все {len(original_df)} записей. Для лучшей производительности рекомендуется использовать ограниченный вид.")
-                if st.button("Отобразить последние 500 записей", key="show_limited_data_analysis"):
-                    limited_df = limit_data_to_last_points(original_df, 500)
-                    st.session_state['filtered_df'] = limited_df
-                    st.session_state['is_limited_view_analysis'] = True
-                    st.rerun()
-        
-        handle_filter_buttons(df)
-        selected_sensors = st.session_state.get('selected_sensors', df.columns.tolist())
-        render_interactive_plot(filtered_df, selected_sensors)
-    else:
-        st.markdown("""<div class=\"block\" style=\"height: 420px;\"></div>""", unsafe_allow_html=True)
-        filtered_df = pd.DataFrame()
-    render_parameter_and_preview_panel(df, filtered_df)
-    render_analysis_panels(df, filtered_df) 
+            st.session_state['target_sensor'] = df.columns[0]
+            st.session_state['last_df_hash'] = current_df_hash
+            st.session_state['original_df'] = df  # Сохраняем оригинальный DataFrame
+            st.session_state['is_limited_view'] = True  # Флаг, что отображается ограниченный вид
+    render_main_panel(df)
+    render_heatmap_pairplot_panel(df)
