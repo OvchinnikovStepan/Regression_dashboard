@@ -159,5 +159,5 @@ def render_analysis_page(df: pd.DataFrame, outlier_percentage: float) -> None:
             st.session_state['last_df_hash'] = current_df_hash
             st.session_state['original_df'] = df  # Сохраняем оригинальный DataFrame
             st.session_state['is_limited_view'] = True  # Флаг, что отображается ограниченный вид
-    render_main_panel(df)
-    render_heatmap_pairplot_panel(df)
+            render_main_panel(df)
+            render_heatmap_pairplot_panel(df)

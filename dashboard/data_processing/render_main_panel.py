@@ -3,7 +3,7 @@ import pandas as pd
 import asyncio
 from dashboard.data_processing.info_about_feature import info_about_feature
 from dashboard.visualization.show_hist import show_hist
-from dashboard.visualization.show_pair_pairplot import show_pair_pairplot
+from dashboard.visualization.show_scatter import show_scatter
 
 def render_main_panel(df: pd.DataFrame):
     """
@@ -60,7 +60,7 @@ def render_main_panel(df: pd.DataFrame):
             with second_cols[1]:
                 st.warning("Параметры не должны совпадать")
         else:
-            show_pair_pairplot(df, [selected_aim_option, selected_second_option])
+            show_scatter(df, [selected_aim_option, selected_second_option])
 
     else:
         st.markdown("""<div class=\"block\" style=\"height: 200px;\"></div>""", unsafe_allow_html=True)

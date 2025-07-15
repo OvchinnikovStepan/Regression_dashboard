@@ -33,9 +33,9 @@ def render_prediction_func(df: pd.DataFrame):
     st.markdown("<h3 style='text-align: center;'>Вывод формулы</h3>", unsafe_allow_html=True)
 
     selected_sensors = st.session_state.get('selected_sensors', df.columns.tolist())
-    aim_cols = st.columns([4, 8])
+    equation_cols = st.columns([4,4])
 
-    with aim_cols[0]:
+    with equation_cols[0]:
         # Выбор целевого параметра
         selected_aim_option = st.selectbox(
             "Выберите целевой параметр",
@@ -46,7 +46,7 @@ def render_prediction_func(df: pd.DataFrame):
     # Получаем доступные колонки (без целевого)
     available_features = [col for col in selected_sensors if col != selected_aim_option]
 
-    with aim_cols[1]:
+    with equation_cols[1]:
         # Multiselect с фильтром
         second_options = st.multiselect(
             "Выберите признаки для построения уравнения:",
@@ -57,11 +57,19 @@ def render_prediction_func(df: pd.DataFrame):
 
     # Обучение модели и вывод формулы
     if second_options:
-        model = LinearRegressionModel()
-        model.fit(df[second_options], df[selected_aim_option],target_name=selected_aim_option)
-        st.markdown(model.get_equation(latex_output=True))
+        with equation_cols[0]:
+            model = LinearRegressionModel()
+            model.fit(df[second_options], df[selected_aim_option],target_name=selected_aim_option)
+            equation = model.get_equation(latex_output=True)
+            st.markdown(f"<div style='font-size:40px;'>{equation}</div>", unsafe_allow_html=True)
+        with equation_cols[1]:
+            st.markdown("<h3 style='text-align: center;'>Точечное предсказание</h3>", unsafe_allow_html=True)
     else:
         st.info("Выберите хотя бы один признак для построения регрессии.")
+
+    
+    
+    
 
 def render_forecasting_page(df: pd.DataFrame, outlier_percentage: float) -> None:
     """
@@ -82,5 +90,5 @@ def render_forecasting_page(df: pd.DataFrame, outlier_percentage: float) -> None
             st.session_state['last_df_hash'] = current_df_hash
             st.session_state['original_df'] = df  # Сохраняем оригинальный DataFrame
             st.session_state['is_limited_view'] = True  # Флаг, что отображается ограниченный вид
-    render_main_panel(df)
-    render_prediction_func(df)
+        render_main_panel(df)
+        render_prediction_func(df)
