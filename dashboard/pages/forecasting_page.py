@@ -48,6 +48,32 @@ def render_prediction_func(df: pd.DataFrame,):
     model = LinearRegressionModel()
     model.fit(df[second_options], df[selected_aim_option])
     st.markdown(model.get_equation(latex_output=True))
+    return second_options
+
+def render_equation(option):
+    @st.dialog("Заполните значения для признаков")
+    def equation_dialog():
+        values = {}
+        for op in option:
+            values[op] = st.number_input(
+                f"Введите значение для признака {op}: ",
+                min_value=1,
+                value=1,
+                format="%d"
+            )
+        if st.button("Подтвердить"):
+            st.session_state.equation_values = values
+            st.session_state.dialog_submitted = True
+            st.session_state.show_dialog = False  # Сбрасываем флаг диалога для его закрытия
+            st.rerun()
+    
+    if st.session_state.get("show_dialog", False):
+        equation_dialog()
+    
+    # Возвращаем значения, если они есть и диалог завершен
+    if 'equation_values' in st.session_state and st.session_state.get('dialog_submitted', False):
+        return st.session_state.equation_values
+    return None
 
 def render_forecasting_page(df: pd.DataFrame, outlier_percentage: float) -> None:
     """
@@ -69,4 +95,15 @@ def render_forecasting_page(df: pd.DataFrame, outlier_percentage: float) -> None
             st.session_state['original_df'] = df  # Сохраняем оригинальный DataFrame
             st.session_state['is_limited_view'] = True  # Флаг, что отображается ограниченный вид
     render_main_panel(df)
-    render_prediction_func(df)
+    second_options = render_prediction_func(df)
+
+    if 'dialog_submitted' not in st.session_state:
+        st.session_state.dialog_submitted = False
+
+    if st.button("Ввести значения для формулы"):
+        st.session_state.show_dialog = True
+        st.session_state.dialog_submitted = False
+
+    values = render_equation(second_options)
+    if values is not None:
+        st.write(values)
