@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
 from dashboard.data_processing.info_about_dataframe import info_about_dataframe
-from dashboard.visualization.plot_interactive_with_selection import plot_interactive_with_selection
 from dashboard.data_processing.render_main_panel import render_main_panel
 from dashboard.visualization.show_heatmap import show_heatmap
+from dashboard.visualization.show_boxplot import show_boxplot
 from dashboard.data_processing.info_about_feature import info_about_feature
 from dashboard.visualization.show_pairplot import show_pairplot
 from dashboard.data_processing.forecasting import forecasting
@@ -62,15 +62,6 @@ def handle_filter_buttons(df: pd.DataFrame) -> None:
             st.session_state['sensor_editor_temp'] = df.columns.tolist()
             st.rerun()
 
-def render_interactive_plot(filtered_df: pd.DataFrame, selected_sensors: List[str]) -> None:
-    """
-    Отображает интерактивный график по выбранным сенсорам
-    """
-    if selected_sensors:
-        plot_interactive_with_selection(filtered_df, selected_sensors=selected_sensors, flag=False)
-    else:
-        st.error("Ошибка: Выберите хотя бы один параметр для отображения графика.")
-
 def render_parameter_and_preview_panel(df: pd.DataFrame, filtered_df: pd.DataFrame) -> None:
     """
     Отображает панель параметров и предпросмотра
@@ -106,6 +97,10 @@ def render_heatmap_pairplot_panel(df: pd.DataFrame) -> None:
     with col_pair:
         st.markdown("### Pairplot")
         show_pairplot(df)
+    col_box = st.columns([3,6,3])
+    with col_box[1]:
+        st.markdown("### Boxplot")
+        show_boxplot(df)
 
 def render_sensor_statistics_panel(df: pd.DataFrame, filtered_df: pd.DataFrame) -> None:
     """
@@ -147,7 +142,7 @@ def render_analysis_page(df: pd.DataFrame, outlier_percentage: float) -> None:
     """
     Рендерит страницу "Анализ данных"
     """
-    st.set_page_config(page_title="Анализ данных", layout="wide")
+    st.title("Анализ данных")
     render_data_overview(df, outlier_percentage)
     
     # Инициализация данных при загрузке нового файла
@@ -164,5 +159,5 @@ def render_analysis_page(df: pd.DataFrame, outlier_percentage: float) -> None:
             st.session_state['last_df_hash'] = current_df_hash
             st.session_state['original_df'] = df  # Сохраняем оригинальный DataFrame
             st.session_state['is_limited_view'] = True  # Флаг, что отображается ограниченный вид
-    render_main_panel(df)
-    render_heatmap_pairplot_panel(df)
+            render_main_panel(df)
+            render_heatmap_pairplot_panel(df)

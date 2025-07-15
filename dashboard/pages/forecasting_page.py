@@ -4,10 +4,6 @@ import asyncio
 from dashboard.data_processing.info_about_dataframe import info_about_dataframe
 from dashboard.data_processing.render_main_panel import render_main_panel
 from dashboard.processing.linearRegressionModel import LinearRegressionModel
-from dashboard.data_processing.select_time_interval import start_date, end_date, filter_dataframe
-from dashboard.visualization.plot_interactive_with_selection import plot_interactive_with_selection
-from API.app.request_functions.create_model_payload_func import create_model_payload
-from API.app.request_functions.model_request_func import get_prediction
 from dashboard.utils.data_limiting import limit_data_to_last_points
 from typing import Optional, List
 
@@ -33,17 +29,30 @@ def render_data_overview(df: pd.DataFrame, outlier_percentage: float) -> None:
 
 
 
-def render_prediction_func(df: pd.DataFrame,):
+def render_prediction_func(df: pd.DataFrame):
     st.markdown("<h3 style='text-align: center;'>Вывод формулы</h3>", unsafe_allow_html=True)
 
     selected_sensors = st.session_state.get('selected_sensors', df.columns.tolist())
-    aim_cols = st.columns([4, 8])
-    with aim_cols[0]:
-        selected_aim_option = st.selectbox("Выберите целевой параметр", selected_sensors)
-    with aim_cols[1]:
+    equation_cols = st.columns([4,4])
+
+    with equation_cols[0]:
+        # Выбор целевого параметра
+        selected_aim_option = st.selectbox(
+            "Выберите целевой параметр",
+            options=selected_sensors,
+            key="selected_aim_option"
+        )
+
+    # Получаем доступные колонки (без целевого)
+    available_features = [col for col in selected_sensors if col != selected_aim_option]
+
+    with equation_cols[1]:
+        # Multiselect с фильтром
         second_options = st.multiselect(
-        "Выберите признаки для построения уравнения:",
-        options=df.columns.tolist(),
+            "Выберите признаки для построения уравнения:",
+            options=available_features,
+            default=st.session_state.get("selected_features", []),
+            key="selected_features"  # Это ключевой момент — Streamlit сам управляет session_state
         )
     model = LinearRegressionModel()
     model.fit(df[second_options], df[selected_aim_option])
@@ -75,11 +84,12 @@ def render_equation(option):
         return st.session_state.equation_values
     return None
 
+
 def render_forecasting_page(df: pd.DataFrame, outlier_percentage: float) -> None:
     """
     Рендерит страницу "Прогнозирование"
     """
-    st.set_page_config(page_title="Прогнозирование", layout="wide")
+    st.title("Прогнозирование")
     render_data_overview(df, outlier_percentage)
     if df is not None:
         current_df_hash = hash(pd.util.hash_pandas_object(df, index=True).sum())
@@ -107,3 +117,4 @@ def render_forecasting_page(df: pd.DataFrame, outlier_percentage: float) -> None
     values = render_equation(second_options)
     if values is not None:
         st.write(values)
+
