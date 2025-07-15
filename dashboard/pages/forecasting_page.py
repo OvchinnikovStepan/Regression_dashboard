@@ -58,7 +58,7 @@ def render_prediction_func(df: pd.DataFrame):
     # Обучение модели и вывод формулы
     if second_options:
         model = LinearRegressionModel()
-        model.fit(df[second_options], df[selected_aim_option])
+        model.fit(df[second_options], df[selected_aim_option],target_name=selected_aim_option)
         st.markdown(model.get_equation(latex_output=True))
     else:
         st.info("Выберите хотя бы один признак для построения регрессии.")

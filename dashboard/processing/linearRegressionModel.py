@@ -48,9 +48,9 @@ class LinearRegressionModel:
 
         # Установка имени целевой переменной
         if target_name:
-            self.target_name = target_name
+            self.target_name = target_name.replace(" ", "-")
         elif isinstance(y, pd.DataFrame):
-            self.target_name = list(y.columns)[0]
+            self.target_name = list(y.columns)[0].replace(" ", "-")
         else:
             self.target_name = 'y'
 
