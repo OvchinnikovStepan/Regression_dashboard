@@ -142,7 +142,7 @@ def render_analysis_page(df: pd.DataFrame, outlier_percentage: float) -> None:
     """
     Рендерит страницу "Анализ данных"
     """
-    st.set_page_config(page_title="Анализ данных", layout="wide")
+    st.title("Анализ данных")
     render_data_overview(df, outlier_percentage)
     
     # Инициализация данных при загрузке нового файла

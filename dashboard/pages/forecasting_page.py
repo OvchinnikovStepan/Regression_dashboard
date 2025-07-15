@@ -67,7 +67,7 @@ def render_forecasting_page(df: pd.DataFrame, outlier_percentage: float) -> None
     """
     Рендерит страницу "Прогнозирование"
     """
-    st.set_page_config(page_title="Прогнозирование", layout="wide")
+    st.title("Прогнозирование")
     render_data_overview(df, outlier_percentage)
     if df is not None:
         current_df_hash = hash(pd.util.hash_pandas_object(df, index=True).sum())

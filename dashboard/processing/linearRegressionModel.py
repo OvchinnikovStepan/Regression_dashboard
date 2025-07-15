@@ -44,7 +44,7 @@ class LinearRegressionModel:
             self.feature_names = [f'x{i}' for i in range(self.X.shape[1])]
         
         # Заменяем пробелы в именах признаков на подчеркивания
-        self.feature_names = [name.replace(" ", "_") for name in self.feature_names]
+        self.feature_names = [name.replace(" ", "-") for name in self.feature_names]
 
         # Установка имени целевой переменной
         if target_name:
@@ -112,9 +112,9 @@ class LinearRegressionModel:
         # Создаем уравнение, начиная с intercept как sympy-выражения
 
         # Округляем коэффициенты до 5 знаков
-        equation = sp.Float(float(self.intercept_), 5)
+        equation = sp.Float(float(self.intercept_), 4)
         for coef, var in zip(self.coef_, vars):
-            equation += sp.Float(float(coef), 5) * var
+            equation += sp.Float(float(coef), 4) * var
             
         self.equation = equation
     
@@ -130,10 +130,8 @@ class LinearRegressionModel:
         """
         if self.equation is None:
             return "Модель еще не обучена"
-            
         y_symbol = symbols(self.target_name)
         eq = Eq(y_symbol, self.equation)
-        
         if latex_output:
             return latex(eq)
         return str(eq)
