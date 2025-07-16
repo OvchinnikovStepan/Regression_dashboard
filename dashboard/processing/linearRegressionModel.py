@@ -44,13 +44,13 @@ class LinearRegressionModel:
             self.feature_names = [f'x{i}' for i in range(self.X.shape[1])]
         
         # Заменяем пробелы в именах признаков на подчеркивания
-        self.feature_names = [name.replace(" ", "-") for name in self.feature_names]
+        self.feature_names = [name.replace(" ", "") for name in self.feature_names]
 
         # Установка имени целевой переменной
         if target_name:
-            self.target_name = target_name.replace(" ", "-")
+            self.target_name = target_name.replace(" ", "")
         elif isinstance(y, pd.DataFrame):
-            self.target_name = list(y.columns)[0].replace(" ", "-")
+            self.target_name = list(y.columns)[0].replace(" ", "")
         else:
             self.target_name = 'y'
 

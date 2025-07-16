@@ -150,14 +150,10 @@ def render_analysis_page(df: pd.DataFrame, outlier_percentage: float) -> None:
         current_df_hash = hash(pd.util.hash_pandas_object(df, index=True).sum())
         if st.session_state.get('last_df_hash') != current_df_hash:
             st.session_state.clear()
-            # При загрузке нового файла ограничиваем данные последними 500 точками
-            limited_df = limit_data_to_last_points(df, 500)
-            st.session_state['filtered_df'] = limited_df
             st.session_state['selected_sensors'] = df.columns.tolist()
             st.session_state['sensor_editor_temp'] = df.columns.tolist()
             st.session_state['target_sensor'] = df.columns[0]
             st.session_state['last_df_hash'] = current_df_hash
             st.session_state['original_df'] = df  # Сохраняем оригинальный DataFrame
-            st.session_state['is_limited_view'] = True  # Флаг, что отображается ограниченный вид
-            render_main_panel(df)
-            render_heatmap_pairplot_panel(df)
+        render_main_panel(df)
+        render_heatmap_pairplot_panel(df)

@@ -54,10 +54,18 @@ def render_prediction_func(df: pd.DataFrame):
             default=st.session_state.get("selected_features", []),
             key="selected_features"  # Это ключевой момент — Streamlit сам управляет session_state
         )
-    model = LinearRegressionModel()
-    model.fit(df[second_options], df[selected_aim_option])
-    st.markdown(model.get_equation(latex_output=True))
-    return second_options
+    if second_options:
+        model = LinearRegressionModel()
+        model.fit(df[second_options], df[selected_aim_option], target_name=selected_aim_option)
+
+         # Сохраняем модель в session_state
+        st.session_state['trained_model'] = model
+        st.session_state['equation_origin'] = model.get_equation(latex_output=True)
+
+        
+        return second_options
+    else:
+        st.info("Выберите хотябы один призднак для построения уравнения")
 
 def render_equation(option):
     @st.dialog("Заполните значения для признаков")
@@ -66,9 +74,8 @@ def render_equation(option):
         for op in option:
             values[op] = st.number_input(
                 f"Введите значение для признака {op}: ",
-                min_value=1,
-                value=1,
-                format="%d"
+                value=1.0,
+                format="%f"
             )
         if st.button("Подтвердить"):
             st.session_state.equation_values = values
@@ -95,26 +102,101 @@ def render_forecasting_page(df: pd.DataFrame, outlier_percentage: float) -> None
         current_df_hash = hash(pd.util.hash_pandas_object(df, index=True).sum())
         if st.session_state.get('last_df_hash') != current_df_hash:
             st.session_state.clear()
-            # При загрузке нового файла ограничиваем данные последними 500 точками
-            limited_df = limit_data_to_last_points(df, 500)
-            st.session_state['filtered_df'] = limited_df
+            st.rerun
             st.session_state['selected_sensors'] = df.columns.tolist()
             st.session_state['sensor_editor_temp'] = df.columns.tolist()
             st.session_state['target_sensor'] = df.columns[0]
             st.session_state['last_df_hash'] = current_df_hash
             st.session_state['original_df'] = df  # Сохраняем оригинальный DataFrame
-            st.session_state['is_limited_view'] = True  # Флаг, что отображается ограниченный вид
-    render_main_panel(df)
-    second_options = render_prediction_func(df)
+        render_main_panel(df)
 
-    if 'dialog_submitted' not in st.session_state:
-        st.session_state.dialog_submitted = False
+    if df is not None and not df.empty:
+        second_options = render_prediction_func(df)
 
-    if st.button("Ввести значения для формулы"):
-        st.session_state.show_dialog = True
-        st.session_state.dialog_submitted = False
+        col1, col2 = st.columns([9, 3])
+        
+        values = render_equation(second_options)
 
-    values = render_equation(second_options)
-    if values is not None:
-        st.write(values)
+        with col1:
+            if st.session_state.get('equation_origin'):
+                st.markdown(f"""
+                    <div style="
+                        display: flex;
+                        align-items: center;      /* Вертикальное центрирование */
+                        justify-content: center;  /* Горизонтальное центрирование */
+                        font-size: 24px;
+                        padding: 10px;
+                        border: 3px solid #ccc;
+                        width: 100%;
+                        height: 100px;            /* Можно изменить под нужды */
+                        box-sizing: border-box;
+                        margin-bottom: 10px;
+                    ">
+                        {st.session_state.equation_origin}
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+            sub_col1, sub_col2 = st.columns([2, 2])
+            with sub_col1:
+                if st.session_state.get('trained_model'):
+                    st.markdown("""
+                        <style>
+                            .stButton button {
+                                font-size: 24px !important;
+                                padding: 15px 30px !important;
+                                height: auto !important;
+                                min-height: 50px !important;
+                                width: 100% !important;
+                            }
+                        </style>
+                        """, unsafe_allow_html=True)
+                    
+                    input_btn = st.button("Ввести значения для формулы", key="open_dialog_button")
+                    if input_btn and second_options is not None:
+                        st.session_state.show_dialog = True
+                        st.session_state.dialog_submitted = False
+                        st.rerun()
 
+            with sub_col2:
+                with sub_col2:
+                    selected_features = st.session_state.get("selected_features", [])
+                    if values is not None and selected_features:
+                        try:
+                            # Проверяем, что есть выбранные признаки
+                            if not selected_features:
+                                st.warning("Не выбрано ни одного признака для предсказания.")
+                                return
+
+                            values_list = [values[feature] for feature in selected_features]
+
+                            # Проверяем, что все признаки были переданы
+                            if len(values_list) == 0:
+                                st.warning("Нет данных для указанных признаков.")
+                                return
+
+                            model = st.session_state['trained_model']
+                            prediction = model.predict([values_list])[0]
+
+                            st.markdown(f"""
+                                <div style="
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: left;
+                                    font-size: 20px;
+                                    padding: 10px;
+                                    width: 100%;
+                                    height: 100px;">
+                                    Итог точечного предсказания: {prediction:.2f}
+                                </div>
+                            """, unsafe_allow_html=True)
+
+                        except Exception as e:
+                            st.warning("Вы не выбрали параметры")
+
+        with col2:
+            if st.session_state.get('trained_model'):
+                model = st.session_state['trained_model']
+                metrics = pd.DataFrame([model.evaluate()]).T
+                metrics.reset_index(inplace=True)
+                metrics.columns = ['Метрика', 'Значение']
+                st.dataframe(metrics, use_container_width=True, hide_index=True)
