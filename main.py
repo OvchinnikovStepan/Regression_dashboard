@@ -3,9 +3,18 @@ from dashboard.components.data_uploader import upload
 from dashboard.pages.analysis_page import render_analysis_page
 from dashboard.pages.forecasting_page import render_forecasting_page
 import os
-os.environ["STREAMLIT_SERVER_WATCH_FILE_BLACKLIST"] = ".*/__pycache__/.*,.*\\.pyc,.*\\.pyo,.*\\.pyd"
-os.environ["STREAMLIT_SERVER_ENABLE_WATCHER"] = "false"  # Полное отключение при проблемах
 
+# Должен быть ПЕРВЫМ вызовом Streamlit!
+st.set_page_config(
+    page_title="Regression Dashboard",  # Общее название для всего дашборда
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+os.environ["STREAMLIT_SERVER_WATCH_FILE_BLACKLIST"] = ".*/__pycache__/.*,.*\\.pyc,.*\\.pyo,.*\\.pyd"
+os.environ["STREAMLIT_SERVER_ENABLE_WATCHER"] = "false"
+
+# Остальной код без изменений...
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap');
@@ -45,7 +54,5 @@ with header_cols[1]:
 
 if page == "Прогнозирование":
     render_forecasting_page(df, outlier_percentage)
-
-
 elif page == "Анализ данных":
     render_analysis_page(df, outlier_percentage)
