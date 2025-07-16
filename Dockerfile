@@ -9,7 +9,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем наши файлы в контейнер
-COPY  /app .
+COPY dashboard dashboard/
+COPY .streamlit .streamlit/
+COPY main.py .
 
 # Запускаем основной файл
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["streamlit", "run", "main.py"]
